@@ -262,6 +262,12 @@ type FeedResponse = {
   meta: { unread_count: number; unseen_count: number; total_count: number };
 };
 
+function toPlainText(html: string) {
+  return (
+    new DOMParser().parseFromString(html, "text/html").body.textContent ?? ""
+  );
+}
+
 // Check 3: talks to Knock straight from the browser with only the public
 // key and the signed user token — no secret key, no Knock React components.
 function HeadlessFeed(props: {
@@ -361,12 +367,9 @@ function HeadlessFeed(props: {
             key={item.id}
             className={`rounded border p-2 text-sm ${item.read_at ? "opacity-50" : ""}`}
           >
-            <div
-              className="prose prose-sm dark:prose-invert"
-              dangerouslySetInnerHTML={{
-                __html: item.blocks[0]?.rendered ?? "(no body)",
-              }}
-            />
+            {/* Plain text only: template data (user names etc.) is untrusted,
+                so never inject Knock's rendered HTML. DOMParser runs no scripts. */}
+            <div>{toPlainText(item.blocks[0]?.rendered ?? "(no body)")}</div>
             <div className="mt-1 text-xs text-muted-foreground">
               {item.source.key} · {new Date(item.inserted_at).toLocaleTimeString()}{" "}
               · seen: {item.seen_at ? "yes" : "no"} · read:{" "}
