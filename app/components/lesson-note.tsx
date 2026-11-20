@@ -16,8 +16,11 @@ export function LessonNote({
 }) {
   const fetcher = useFetcher<{ ok: boolean; error?: string }>();
   const [body, setBody] = useState(note?.body ?? "");
+  const [submittedBody, setSubmittedBody] = useState<string | null>(null);
   const isSaving = fetcher.state !== "idle";
-  const error = fetcher.data?.error;
+  // The server's error is about the text it was sent; once the learner edits
+  // it, the status line goes back to describing the box.
+  const error = body === submittedBody ? fetcher.data?.error : undefined;
   const draft = describeNoteDraft(body, note?.body ?? null);
 
   return (
@@ -25,7 +28,11 @@ export function LessonNote({
       <CardContent className="p-6">
         <NoteHeading />
 
-        <fetcher.Form method="post" className="space-y-2">
+        <fetcher.Form
+          method="post"
+          className="space-y-2"
+          onSubmit={() => setSubmittedBody(body)}
+        >
           <input type="hidden" name="intent" value="save-note" />
           <Textarea
             name="body"
