@@ -1,6 +1,5 @@
 import { Link, data, isRouteErrorResponse } from "react-router";
 import { AlertTriangle } from "lucide-react";
-import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Route } from "./+types/courses.$slug.lessons.$lessonId";
 import {
@@ -47,7 +46,6 @@ import { MAX_NOTE_LENGTH } from "~/lib/notes";
 import { renderMarkdown } from "~/lib/markdown.server";
 import { parseFormData } from "~/lib/validation";
 import { db } from "~/db";
-import { quizzes } from "~/db/schema";
 import { Button } from "~/components/ui/button";
 import { FullLesson } from "~/components/lesson-full";
 import { LockedLesson } from "~/components/lesson-locked";
@@ -73,6 +71,11 @@ const saveNoteSchema = z.object({
       MAX_NOTE_LENGTH,
       `Your note is over ${MAX_NOTE_LENGTH.toLocaleString("en")} characters, so it was not saved.`
     ),
+});
+
+const submitQuizSchema = z.object({
+  intent: z.literal("submit-quiz"),
+  quizId: z.coerce.number().int().positive(),
 });
 
 const deleteCommentSchema = z.object({
@@ -429,14 +432,15 @@ export async function action({ params, request }: Route.ActionArgs) {
   }
 
   if (intent === "submit-quiz") {
-    const quizId = Number(formData.get("quizId"));
-    if (isNaN(quizId)) {
+    const parsedQuiz = parseFormData(formData, submitQuizSchema);
+    if (!parsedQuiz.success) {
       throw data("Invalid quiz ID", { status: 400 });
     }
+    const { quizId } = parsedQuiz.data;
     // Scope the quiz to this lesson so a quiz elsewhere can't be reached by
     // posting its id to this route.
-    const quiz = db.select().from(quizzes).where(eq(quizzes.id, quizId)).get();
-    if (!quiz || quiz.lessonId !== lessonId) {
+    const quiz = getQuizByLessonId(lessonId);
+    if (!quiz || quiz.id !== quizId) {
       throw data("Quiz not found", { status: 404 });
     }
 
