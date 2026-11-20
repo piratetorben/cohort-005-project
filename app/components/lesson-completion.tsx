@@ -14,7 +14,7 @@ export function LessonCompletion({
 }: {
   courseSlug: string;
   lessonId: number;
-  lessonStatus: string | null;
+  lessonStatus: LessonProgressStatus | null;
   nextLesson: NextLesson;
 }) {
   const fetcher = useFetcher({ key: `mark-complete-${lessonId}` });

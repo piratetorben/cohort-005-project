@@ -46,6 +46,7 @@ import { MAX_NOTE_LENGTH } from "~/lib/notes";
 import { renderMarkdown } from "~/lib/markdown.server";
 import { parseFormData } from "~/lib/validation";
 import { db } from "~/db";
+import { LessonProgressStatus } from "~/db/schema";
 import { Button } from "~/components/ui/button";
 import { FullLesson } from "~/components/lesson-full";
 import { LockedLesson } from "~/components/lesson-locked";
@@ -164,10 +165,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     };
   }
 
-  let lessonStatus: string | null = null;
+  let lessonStatus: LessonProgressStatus | null = null;
   let lastWatchPosition = 0;
   let watchProgress = 0;
-  const lessonProgressMap: Record<number, string> = {};
+  const lessonProgressMap: Record<number, LessonProgressStatus> = {};
 
   if (currentUserId) {
     // Progress is recorded only for people who can take the course, so a
