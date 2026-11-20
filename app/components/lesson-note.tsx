@@ -46,7 +46,7 @@ export function LessonNote({
             </Button>
             <NoteStatus
               error={error}
-              unsaved={draft.unsaved}
+              draft={draft}
               updatedAt={note?.updatedAt ?? null}
             />
             <NoteCounter draft={draft} />
@@ -59,15 +59,24 @@ export function LessonNote({
 
 function NoteStatus({
   error,
-  unsaved,
+  draft,
   updatedAt,
 }: {
   error: string | undefined;
-  unsaved: boolean;
+  draft: NoteDraft;
   updatedAt: string | null;
 }) {
   if (error) return <span className="text-xs text-destructive">{error}</span>;
-  if (unsaved && updatedAt) {
+  // Save is disabled for an empty box, so say why rather than leave the
+  // learner pressing a dead button after clearing a saved Note.
+  if (draft.empty && updatedAt) {
+    return (
+      <span className="text-xs text-muted-foreground">
+        A note can't be empty
+      </span>
+    );
+  }
+  if (draft.unsaved && updatedAt) {
     return (
       <span className="text-xs text-muted-foreground">Unsaved changes</span>
     );
