@@ -44,13 +44,19 @@ import { isBookmarked, toggleBookmark } from "~/lib/bookmarks.server";
 import { getNote, saveNote } from "~/lib/notes.server";
 import { MAX_NOTE_LENGTH } from "~/lib/notes";
 import { renderMarkdown } from "~/lib/markdown.server";
-import { parseFormData } from "~/lib/validation";
+import { parseFormData, parseParams } from "~/lib/validation";
 import { db } from "~/db";
 import { LessonProgressStatus } from "~/db/schema";
 import { Button } from "~/components/ui/button";
 import type { LessonQuiz } from "~/components/lesson-quiz";
 import { FullLesson } from "~/components/lesson-full";
 import { LockedLesson } from "~/components/lesson-locked";
+
+const lessonParamsSchema = z.object({
+  lessonId: z.coerce.number().int().positive(),
+});
+
+const quizAnswerIdSchema = z.coerce.number().int().positive();
 
 const createCommentSchema = z.object({
   intent: z.literal("create-comment"),
@@ -127,7 +133,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   const { course, person, enrolled, view, take, manage } = decisions;
   const currentUserId = person?.id ?? null;
-  const lessonId = Number(params.lessonId);
+  const { lessonId } = parseParams(params, lessonParamsSchema);
 
   const courseWithDetails = getCourseWithDetails(course.id);
   const lesson = getLessonById(lessonId);
@@ -305,7 +311,7 @@ export async function action({ params, request }: Route.ActionArgs) {
     ref
   );
   const currentUserId = person.id;
-  const lessonId = Number(params.lessonId);
+  const { lessonId } = parseParams(params, lessonParamsSchema);
 
   if (
     intent === "create-comment" ||
@@ -429,15 +435,15 @@ export async function action({ params, request }: Route.ActionArgs) {
       throw data("Quiz not found", { status: 404 });
     }
 
-    // Collect answers: form fields named "question-{questionId}" with value = optionId
     const selectedAnswers: Record<number, number> = {};
     for (const [key, value] of formData.entries()) {
-      if (key.startsWith("question-")) {
-        const questionId = Number(key.replace("question-", ""));
-        const optionId = Number(value);
-        if (!isNaN(questionId) && !isNaN(optionId)) {
-          selectedAnswers[questionId] = optionId;
-        }
+      if (!key.startsWith("question-")) continue;
+      const questionId = quizAnswerIdSchema.safeParse(
+        key.slice("question-".length)
+      );
+      const optionId = quizAnswerIdSchema.safeParse(value);
+      if (questionId.success && optionId.success) {
+        selectedAnswers[questionId.data] = optionId.data;
       }
     }
 
