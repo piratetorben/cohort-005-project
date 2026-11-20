@@ -48,6 +48,7 @@ import { parseFormData } from "~/lib/validation";
 import { db } from "~/db";
 import { LessonProgressStatus } from "~/db/schema";
 import { Button } from "~/components/ui/button";
+import type { LessonQuiz } from "~/components/lesson-quiz";
 import { FullLesson } from "~/components/lesson-full";
 import { LockedLesson } from "~/components/lesson-locked";
 
@@ -221,18 +222,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
   const quizRecord = getQuizByLessonId(lessonId);
-  let quiz: {
-    id: number;
-    title: string;
-    passingScore: number;
-    questions: Array<{
-      id: number;
-      questionText: string;
-      questionType: string;
-      position: number;
-      options: Array<{ id: number; optionText: string }>;
-    }>;
-  } | null = null;
+  let quiz: LessonQuiz | null = null;
   let bestAttempt: { score: number; passed: boolean } | null = null;
 
   if (quizRecord) {

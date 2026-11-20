@@ -10,6 +10,21 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
+import type { QuestionType } from "~/db/schema";
+
+/** A quiz as the learner sees it: options carry no isCorrect. */
+export type LessonQuiz = {
+  id: number;
+  title: string;
+  passingScore: number;
+  questions: Array<{
+    id: number;
+    questionText: string;
+    questionType: QuestionType;
+    position: number;
+    options: Array<{ id: number; optionText: string }>;
+  }>;
+};
 
 export function QuizSection({
   quiz,
@@ -18,18 +33,7 @@ export function QuizSection({
   quizFetcher,
   isSubmitting,
 }: {
-  quiz: {
-    id: number;
-    title: string;
-    passingScore: number;
-    questions: Array<{
-      id: number;
-      questionText: string;
-      questionType: string;
-      position: number;
-      options: Array<{ id: number; optionText: string }>;
-    }>;
-  };
+  quiz: LessonQuiz;
   bestAttempt: { score: number; passed: boolean } | null;
   quizResult: {
     attemptId: number;
@@ -82,7 +86,6 @@ export function QuizSection({
             <h2 className="text-xl font-semibold">{quiz.title}</h2>
           </div>
 
-          {/* Results summary */}
           <div
             className={`mb-6 rounded-lg p-4 ${quizResult.passed ? "bg-green-50 dark:bg-green-950" : "bg-red-50 dark:bg-red-950"}`}
           >
@@ -107,7 +110,6 @@ export function QuizSection({
             </div>
           </div>
 
-          {/* Per-question results */}
           <div className="space-y-4">
             {quiz.questions.map((question, qIndex) => {
               const result = quizResult.questionResults.find(
@@ -149,7 +151,6 @@ export function QuizSection({
             })}
           </div>
 
-          {/* Retake button */}
           {!quizResult.passed && (
             <div className="mt-6">
               <Button
