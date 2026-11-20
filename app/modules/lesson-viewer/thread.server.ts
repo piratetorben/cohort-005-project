@@ -1,5 +1,5 @@
 export {
-  getCommentById,
+  getLessonComment,
   getLessonThread,
   renderThread,
   type ThreadComment,

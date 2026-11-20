@@ -7,7 +7,7 @@ import {
   users,
   UserRole,
 } from "~/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { renderComment } from "~/lib/comment-markdown.server";
 import { markdown, type Markdown } from "~/lib/text";
 import type { RenderedComment } from "~/components/comment-thread";
@@ -45,8 +45,16 @@ export function getCourseForLesson(lessonId: number) {
     .get();
 }
 
-export function getCommentById(commentId: number) {
-  return db.select().from(comments).where(eq(comments.id, commentId)).get();
+/**
+ * A comment on this lesson, or nothing. Scoped to the lesson so a comment
+ * elsewhere can't be reached by posting its id to another lesson's route.
+ */
+export function getLessonComment(lessonId: number, commentId: number) {
+  return db
+    .select()
+    .from(comments)
+    .where(and(eq(comments.id, commentId), eq(comments.lessonId, lessonId)))
+    .get();
 }
 
 type ThreadRow = ReturnType<typeof selectThreadRows>[number];
